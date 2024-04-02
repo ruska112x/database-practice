@@ -43,4 +43,32 @@ VALUES (
         17,
         20,
         1716
+    ),
+    (
+        'Novosibirsk[a] is the largest city and administrative centre of Novosibirsk Oblast and the Siberian Federal District in Russia. As of the 2021 Census, it had a population of 1,633,595, making it the most populous city in Siberia and the third-most populous city in Russia after Moscow and Saint Petersburg. The city is located in southwestern Siberia, on the banks of the Ob River.',
+        87,
+        94,
+        1893
     );
+INSERT INTO localities(
+        locality_name,
+        population,
+        area,
+        locality_type_id,
+        locality_trip_description_id
+    )
+VALUES ('Omsk', 1181000, 572.5, 1, null),
+    ('Sosnovskoe', 3000, 20.7, 2, null),
+    ('Kokshetau', 161000, 233.6, 1, null),
+    ('Novosibirsk', 1453000, 502.7, 1, null),
+    ('Kemerovo', 531000, 294.8, 1, null);
+INSERT INTO road_types(road_type_name)
+VALUES ('Highway');
+INSERT INTO roads(
+        f_locality_id,
+        s_locality_id,
+        length,
+        road_type_id
+    )
+VALUES(1, 4, 639, 1),
+    (4, 5, 270, 1);
