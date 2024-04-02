@@ -5,7 +5,7 @@ entity localities {
     ---
     - name //varchar127//
     - population //int//
-    - area //int//
+    - area //float//
     - locality_type_id **FK**
     - locality_trip_description_id **FK**
 }
