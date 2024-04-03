@@ -7,7 +7,7 @@ from localities;
 select DISTINCT locality_type_id
 FROM localities;
 -- select calculated values and aliases
-select (population / area) as density
+select locality_name, (population / area) as density
 from localities;
 -- select with where
 select locality_name,
