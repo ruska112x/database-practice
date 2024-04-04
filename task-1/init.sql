@@ -84,3 +84,4 @@ INSERT INTO roads(
     )
 VALUES(1, 7, 639, 1),
     (7, 8, 270, 1);
+-- !TODO more tables, many-to-many and with n same entities
