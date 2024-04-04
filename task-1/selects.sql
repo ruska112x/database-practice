@@ -81,7 +81,7 @@ ORDER BY population DESC;
 -- select with count, sum, avg, min, max
 SELECT count(*) as count_of_localities
 from localities;
-SELECT sum(length)
+SELECT sum(length) as sum_of_all_roads
 from roads;
 SELECT locality_name,
     population
