@@ -63,16 +63,27 @@ INSERT INTO localities(
         locality_type_id,
         locality_trip_description_id
     )
-VALUES ('Omsk', 1181000, 572.5, 1, 1),
+VALUES -- id: 1
+    ('Omsk', 1181000, 572.5, 1, 1),
+    -- id: 2
     ('Sosnovskoe', 3000, 20.7, 2, null),
+    -- id: 3
     ('Kokshetau', 161000, 233.6, 1, null),
+    -- id: 4
     ('Tyumen', 581000, 698.5, 1, null),
+    -- id: 5
     ('Chelyabinsk', 1202000, 530, 1, null),
+    -- id: 6
     ('Yekaterinburg', 1495000, 1111, 1, 3),
+    -- id: 7
     ('Novosibirsk', 1453000, 502.7, 1, 2),
+    -- id: 8
     ('Kemerovo', 531000, 294.8, 1, null),
+    -- id: 9
     ('Barnaul', 612000, 320.1, 1, null),
+    -- id: 10
     ('Novokuznetsk', 547000, 424.3, 1, null),
+    -- id: 11
     ('Tomsk', 524000, 294.6, 1, null);
 INSERT INTO road_types(road_type_name)
 VALUES ('Highway');
@@ -83,5 +94,15 @@ INSERT INTO roads(
         road_type_id
     )
 VALUES(1, 7, 639, 1),
-    (7, 8, 270, 1);
+    (7, 8, 270, 1),
+    (2, 1, 1, 1),
+    (2, 3, 3, 1),
+    (2, 4, 4, 1),
+    (2, 5, 5, 1),
+    (2, 6, 6, 1),
+    (2, 7, 7, 1),
+    (2, 8, 8, 1),
+    (2, 9, 9, 1),
+    (2, 10, 10, 1),
+    (2, 11, 11, 1);
 -- !TODO more tables, many-to-many and with n same entities

@@ -28,3 +28,67 @@ UNION
 SELECT locality_name
 FROM localities
 WHERE area >= 1000;
+-- division
+-- division on count
+SELECT *
+FROM localities
+WHERE locality_id = (
+        SELECT f_locality_id
+        FROM roads
+        GROUP BY f_locality_id
+        HAVING count(s_locality_id) = (
+                SELECT count(*)
+                FROM localities
+                WHERE locality_type_id = 1
+            )
+    );
+-- equi join
+SELECT l1.locality_name,
+    l2.locality_name
+FROM localities as l1
+    inner join roads as r on l1.locality_id = r.f_locality_id
+    inner join localities as l2 on r.s_locality_id = l2.locality_id;
+-- natural join
+SELECT *
+FROM localities
+    natural join locality_trip_descriptions;
+-- composition
+SELECT locality_name,
+    description
+FROM localities as l,
+    locality_trip_descriptions as d
+WHERE l.locality_trip_description_id = d.locality_trip_description_id;
+-- inner join
+SELECT *
+FROM localities as l
+    inner join locality_trip_descriptions as d on l.locality_trip_description_id = d.locality_trip_description_id;
+-- outer join
+SELECT *
+FROM localities as l
+    left outer join locality_trip_descriptions as d on l.locality_trip_description_id = d.locality_trip_description_id;
+SELECT *
+FROM localities as l
+    right outer join locality_trip_descriptions as d on l.locality_trip_description_id = d.locality_trip_description_id;
+-- using
+SELECT *
+FROM localities as l
+    right outer join locality_trip_descriptions as d using(locality_trip_description_id);
+-- cross join
+SELECT *
+FROM locality_types
+    cross join road_types;
+-- left join
+SELECT *
+FROM localities as l1
+    left join roads as r on l1.locality_id = r.f_locality_id;
+--right join
+SELECT *
+FROM localities as l1
+    right join roads as r on l1.locality_id = r.f_locality_id;
+-- self join
+SELECT l1.locality_name,
+    l1.locality_id,
+    l2.locality_id,
+    l2.locality_name
+FROM localities as l1
+    join localities as l2 on l1.locality_id <> l2.locality_id;
