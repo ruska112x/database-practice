@@ -50,3 +50,24 @@ where locality_id in (
                 from roads
             )
     );
+-- 6
+SELECT *
+FROM localities
+WHERE locality_id IN (
+        SELECT f_locality_id
+        FROM roads
+        WHERE length > 200
+        GROUP BY f_locality_id
+        HAVING count(s_locality_id) > 1
+    );
+-- 7
+SELECT *
+FROM localities as l1
+WHERE locality_id IN (
+        SELECT f_locality_id
+        FROM roads as r1
+        WHERE l1.locality_id <> r1.s_locality_id
+            and length > 200
+        GROUP BY f_locality_id
+        HAVING count(s_locality_id) > 1
+    );

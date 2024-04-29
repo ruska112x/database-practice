@@ -32,7 +32,7 @@ WHERE area >= 1000;
 -- division on count
 SELECT *
 FROM localities
-WHERE locality_id = (
+WHERE locality_id in (
         SELECT f_locality_id
         FROM roads
         GROUP BY f_locality_id
