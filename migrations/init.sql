@@ -76,6 +76,7 @@ UPDATE ON localities FOR EACH ROW EXECUTE FUNCTION before_update_trigger_functio
 ---------------------------------------------------------------
 ;
 -- START get_locations_with_roads
+;
 CREATE FUNCTION get_locations_with_roads() RETURNS TABLE (
     f_locality varchar(127),
     s_locality varchar(127),
@@ -90,7 +91,9 @@ FROM localities as l1
 END;
 $$;
 -- END get_locations_with_roads
+;
 -- START get_locality_with_all_roads
+;
 CREATE FUNCTION get_locality_with_all_roads() RETURNS TABLE (
     locality_id int,
     locality_name varchar(127),
@@ -114,25 +117,35 @@ WHERE l1.locality_id in (
 END;
 $$;
 -- END get_locality_with_all_roads
+;
 -- START get_density_of_locality_by_id
-CREATE FUNCTION get_density_of_locality_by_id(p_id int) RETURNS TABLE (
-    locality_name varchar(127),
-    density float
-) LANGUAGE plpgsql AS $$ BEGIN RETURN QUERY
+;
+CREATE PROCEDURE get_density_of_locality_by_id(IN p_id INT) LANGUAGE plpgsql AS $$ BEGIN
 SELECT l1.locality_name,
     (l1.population / l1.area) as density
 FROM localities as l1
 WHERE l1.locality_id = p_id;
 END;
 $$;
+-- function for get_density_of_locality_by_id
+;
+CREATE FUNCTION fget_density_of_locality_by_id(p_id int) RETURNS TABLE (
+    locality_name varchar(127),
+    density float
+) LANGUAGE plpgsql AS $$ BEGIN RETURN QUERY CALL get_density_of_locality_by_id(p_id);
+END;
+$$;
 -- END get_density_of_locality_by_id
+;
 -- START get_total_area
+;
 CREATE PROCEDURE get_total_area(OUT total_area FLOAT) LANGUAGE plpgsql AS $$ BEGIN
 SELECT SUM(area) INTO total_area
 FROM localities;
 END;
 $$;
--- function
+-- function for get_total_area
+;
 CREATE FUNCTION fget_total_area() RETURNS FLOAT LANGUAGE plpgsql AS $$
 DECLARE total FLOAT;
 BEGIN CALL get_total_area(total);
@@ -141,10 +154,16 @@ END;
 $$;
 -- END get_total_area
 -- START get_count_of_localities_with_population_more_than
-CREATE PROCEDURE get_count_of_localities_with_population_more_than(IN popul INT, OUT count_popul INT) LANGUAGE plpgsql AS $$ BEGIN
-SELECT COUNT(*) INTO count_popul
+CREATE PROCEDURE get_count_of_localities_with_population_more_than(INOUT popul INT) LANGUAGE plpgsql AS $$ BEGIN
+SELECT COUNT(*) INTO popul
 FROM localities
 WHERE population > popul;
+END;
+$$;
+--function for get_count_of_localities_with_population_more_than
+;
+CREATE FUNCTION fget_count_of_localities_with_population_more_than(popul INT) RETURNS INT LANGUAGE plpgsql AS $$ BEGIN CALL get_count_of_localities_with_population_more_than(popul);
+RETURN popul;
 END;
 $$;
 -- END get_count_of_localities_with_population_more_than
