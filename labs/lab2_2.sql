@@ -40,14 +40,19 @@ WHERE locality_id NOT IN (
 -- 5
 select *
 from localities as l1
-where locality_id in (
-        select f_locality_id
+where l1.locality_id in (
+        select r1.f_locality_id
         from roads as r1
-        group by f_locality_id
+        group by r1.f_locality_id
         having r1.f_locality_id = l1.locality_id
             and avg(length) > (
-                select avg(length)
-                from roads
+                select avg(av_l)
+                from (
+                        select avg(r2.length) as av_l
+                        from roads as r2
+                        where r2.f_locality_id <> l1.locality_id
+                        group by r2.f_locality_id
+                    )
             )
     );
 -- 6
