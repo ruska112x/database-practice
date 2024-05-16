@@ -228,7 +228,17 @@ VALUES -- id: 1
     -- id: 10
     ('Novokuznetsk', 547000, 424.3, 1, null),
     -- id: 11
-    ('Tomsk', 524000, 294.6, 1, null);
+    ('Tomsk', 524000, 294.6, 1, null),
+    -- id: 12
+    ('Tavricheskoe', 30000, 67.7, 2, null),
+    -- id: 13
+    ('Sadovoe', 300, 5.7, 2, null),
+    -- id: 14
+    ('Lugovoe', 150, 4.7, 2, null),
+    -- id: 15
+    ('Stepnoe', 360, 10.3, 2, null),
+    -- id: 16
+    ('Lesnoe', 230, 2.3, 2, null);
 INSERT INTO road_types(road_type_name)
 VALUES ('Highway');
 INSERT INTO roads(
