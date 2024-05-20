@@ -115,3 +115,56 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 select * from create_test(20, 30, 50, 13);
+---------------------------------------------------------------
+-- 4.3
+---------------------------------------------------------------
+;
+CREATE OR REPLACE FUNCTION shuffle_answers(answer_1 varchar(32), answer_2 varchar(32), answer_3 varchar(32))
+RETURNS varchar(32)[] AS $$
+DECLARE
+    s_cursor CURSOR FOR SELECT * FROM (
+        SELECT * FROM (
+            SELECT answer_1 UNION
+            SELECT answer_2 UNION
+            SELECT answer_3
+        )
+        ORDER BY random()
+    );
+    answer varchar(32);
+    answers varchar(32)[];
+BEGIN
+    OPEN s_cursor;
+    FETCH s_cursor INTO answer;
+    answers := array_append(answers, answer);
+    FETCH s_cursor INTO answer;
+    answers := array_append(answers, answer);
+    FETCH s_cursor INTO answer;
+    answers := array_append(answers, answer);
+    CLOSE s_cursor;
+    RETURN answers;
+END;
+$$ LANGUAGE plpgsql;
+---------------------------------------------------------------
+;
+CREATE OR REPLACE FUNCTION random_test()
+RETURNS TABLE(question TEXT, answer_1 varchar(32), answer_2 varchar(32), answer_3 varchar(32), difficult INT) AS $$
+DECLARE
+    r RECORD;
+    answers varchar(32)[];
+    my_cursor CURSOR FOR SELECT * FROM questions;
+BEGIN
+    CREATE TEMP TABLE tmp_table (question TEXT, answer_1 varchar(32), answer_2 varchar(32), answer_3 varchar(32), difficult INT) ON COMMIT DROP;
+    
+    OPEN my_cursor;
+    LOOP
+        FETCH my_cursor INTO r;
+        EXIT WHEN NOT FOUND;
+        answers := shuffle_answers(r.answer_1, r.answer_2, r.answer_3);
+        INSERT INTO tmp_table VALUES (r.question, answers[1], answers[2], answers[3], r.difficult);
+    END LOOP;
+    CLOSE my_cursor;
+
+    RETURN QUERY SELECT * FROM tmp_table ORDER BY random();
+END;
+$$ LANGUAGE plpgsql;
+select * from random_test();
