@@ -189,8 +189,7 @@ BEGIN
         id SERIAL PRIMARY KEY,
         a INT
     );
-
-    TRUNCATE TABLE data;
+    TRUNCATE TABLE data RESTART IDENTITY;
 
     INSERT INTO data (a)
     SELECT floor(random() * 100 + 1)::int
@@ -200,15 +199,22 @@ BEGIN
 
     SELECT MIN(a), MAX(a) INTO min_a, max_a FROM data;
 
-    CREATE TEMP TABLE IF NOT EXISTS data_prime AS
-    SELECT id, 
-           CASE 
-               WHEN a > avg_a THEN min_a
-               ELSE max_a
-           END AS a_prime
-    FROM data;
+    CREATE TEMP TABLE IF NOT EXISTS data_prime (
+        id_prime INT,
+        a_prime INT
+    );
+    TRUNCATE TABLE data_prime RESTART IDENTITY;
 
-    TRUNCATE TABLE data_prime;
+    FOR r IN SELECT * FROM data LOOP
+        INSERT INTO data_prime(id_prime, a_prime)
+        VALUES (
+            r.id,
+            CASE 
+               WHEN r.a > avg_a THEN min_a
+               ELSE max_a
+            END
+        );
+    END LOOP;
 
     RAISE NOTICE 'DATA';
     FOR r IN SELECT * FROM data LOOP
