@@ -43,6 +43,8 @@ BEGIN
     RETURN QUERY VALUES(needed_lt, max_streak);
     end;
 $$ LANGUAGE plpgsql;
+---------------------------------------------------------------
+;
 SELECT * FROM fllt_streak(2);
 ---------------------------------------------------------------
 -- 4.2 
@@ -114,6 +116,8 @@ BEGIN
     RETURN QUERY SELECT * FROM tmp_table ORDER BY random();
 END;
 $$ LANGUAGE plpgsql;
+---------------------------------------------------------------
+;
 select * from create_test(20, 30, 50, 13);
 ---------------------------------------------------------------
 -- 4.3
@@ -167,12 +171,14 @@ BEGIN
     RETURN QUERY SELECT * FROM tmp_table ORDER BY random();
 END;
 $$ LANGUAGE plpgsql;
+---------------------------------------------------------------
+;
 select * from random_test();
 ---------------------------------------------------------------
 -- 4.4
 ---------------------------------------------------------------
 ;
-CREATE OR REPLACE FUNCTION generate_and_analyze_data(num_records INT)
+CREATE OR REPLACE FUNCTION analyze(num_records INT)
 RETURNS TABLE (
     dataset TEXT,
     mean DOUBLE PRECISION,
@@ -248,4 +254,98 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
-select * from generate_and_analyze_data(10);
+---------------------------------------------------------------
+;
+select * from analyze(10);
+---------------------------------------------------------------
+-- 4.5
+---------------------------------------------------------------
+;
+CREATE OR REPLACE FUNCTION analyze2(num_records INT)
+RETURNS TABLE (
+    dataset TEXT,
+    a_mean DOUBLE PRECISION,
+    a_stddev DOUBLE PRECISION,
+    a_median DOUBLE PRECISION,
+    b_mean DOUBLE PRECISION,
+    b_stddev DOUBLE PRECISION,
+    b_median DOUBLE PRECISION
+) AS $$
+DECLARE
+    avg_a DOUBLE PRECISION;
+    min_a INT;
+    max_a INT;
+    r RECORD;
+BEGIN
+    CREATE TEMP TABLE IF NOT EXISTS data (
+        id SERIAL PRIMARY KEY,
+        a INT,
+        b DOUBLE PRECISION
+    );
+    TRUNCATE TABLE data RESTART IDENTITY;
+
+    INSERT INTO data (a)
+    SELECT floor(random() * 100 + 1)::int
+    FROM generate_series(1, num_records);
+
+    FOR r IN SELECT * FROM data LOOP
+        UPDATE data set b = (0.01 * r.a) WHERE r.id = id;
+    END LOOP;
+
+    CREATE TEMP TABLE IF NOT EXISTS data_prime (
+        id_prime INT,
+        a_prime INT,
+        b_prime DOUBLE PRECISION
+    );
+    TRUNCATE TABLE data_prime RESTART IDENTITY;
+
+    FOR r IN SELECT * FROM data LOOP
+        INSERT INTO data_prime(id_prime, a_prime, b_prime)
+        VALUES (
+            r.id,
+            r.a,
+            r.a * r.a
+        );
+    END LOOP;
+
+    RAISE NOTICE 'DATA';
+    FOR r IN SELECT * FROM data LOOP
+        RAISE NOTICE '%', to_json(r);
+    END LOOP;
+    RAISE NOTICE 'DATA_PRIME';
+    FOR r IN SELECT * FROM data_prime LOOP
+        RAISE NOTICE '%', to_json(r);
+    END LOOP;
+
+    RETURN QUERY
+    WITH stats AS (
+        SELECT 
+            'data' AS dataset,
+            AVG(a)::double precision AS a_mean,
+            STDDEV(a)::double precision AS a_stddev,
+            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY a)::double precision AS a_median,
+            AVG(b)::double precision AS b_mean,
+            STDDEV(b)::double precision AS b_stddev,
+            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY b)::double precision AS b_median
+        FROM data
+    ),
+    stats_prime AS (
+        SELECT 
+            'data_prime' AS dataset,
+            AVG(a_prime)::double precision AS a_mean,
+            STDDEV(a_prime)::double precision AS a_stddev,
+            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY a_prime)::double precision AS a_median,
+            AVG(b_prime)::double precision AS b_mean,
+            STDDEV(b_prime)::double precision AS b_stddev,
+            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY b_prime)::double precision AS b_median
+        FROM data_prime
+    )
+    SELECT * FROM stats
+    UNION ALL
+    SELECT * FROM stats_prime;
+
+END;
+$$ LANGUAGE plpgsql;
+---------------------------------------------------------------
+;
+select * from analyze2(10);
