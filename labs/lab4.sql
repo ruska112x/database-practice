@@ -178,7 +178,7 @@ select * from random_test();
 -- 4.4
 ---------------------------------------------------------------
 ;
-CREATE OR REPLACE FUNCTION analyze(num_records INT)
+CREATE OR REPLACE FUNCTION f_analyze(num_records INT)
 RETURNS TABLE (
     dataset TEXT,
     mean DOUBLE PRECISION,
@@ -256,12 +256,12 @@ END;
 $$ LANGUAGE plpgsql;
 ---------------------------------------------------------------
 ;
-select * from analyze(10);
+select * from f_analyze(10);
 ---------------------------------------------------------------
 -- 4.5
 ---------------------------------------------------------------
 ;
-CREATE OR REPLACE FUNCTION analyze2(num_records INT)
+CREATE OR REPLACE FUNCTION f_analyze2(num_records INT)
 RETURNS TABLE (
     dataset TEXT,
     a_mean DOUBLE PRECISION,
@@ -272,35 +272,32 @@ RETURNS TABLE (
     b_median DOUBLE PRECISION
 ) AS $$
 DECLARE
-    avg_a DOUBLE PRECISION;
-    min_a INT;
-    max_a INT;
     r RECORD;
 BEGIN
-    CREATE TEMP TABLE IF NOT EXISTS data (
+    CREATE TEMP TABLE IF NOT EXISTS data2 (
         id SERIAL PRIMARY KEY,
         a INT,
         b DOUBLE PRECISION
     );
-    TRUNCATE TABLE data RESTART IDENTITY;
+    TRUNCATE TABLE data2 RESTART IDENTITY;
 
-    INSERT INTO data (a)
+    INSERT INTO data2 (a)
     SELECT floor(random() * 100 + 1)::int
     FROM generate_series(1, num_records);
 
-    FOR r IN SELECT * FROM data LOOP
-        UPDATE data set b = (0.01 * r.a) WHERE r.id = id;
+    FOR r IN SELECT * FROM data2 LOOP
+        UPDATE data2 set b = (0.01 * r.a) WHERE r.id = id;
     END LOOP;
 
-    CREATE TEMP TABLE IF NOT EXISTS data_prime (
+    CREATE TEMP TABLE IF NOT EXISTS data2_prime (
         id_prime INT,
         a_prime INT,
         b_prime DOUBLE PRECISION
     );
-    TRUNCATE TABLE data_prime RESTART IDENTITY;
+    TRUNCATE TABLE data2_prime RESTART IDENTITY;
 
-    FOR r IN SELECT * FROM data LOOP
-        INSERT INTO data_prime(id_prime, a_prime, b_prime)
+    FOR r IN SELECT * FROM data2 LOOP
+        INSERT INTO data2_prime(id_prime, a_prime, b_prime)
         VALUES (
             r.id,
             r.a,
@@ -309,36 +306,36 @@ BEGIN
     END LOOP;
 
     RAISE NOTICE 'DATA';
-    FOR r IN SELECT * FROM data LOOP
+    FOR r IN SELECT * FROM data2 LOOP
         RAISE NOTICE '%', to_json(r);
     END LOOP;
     RAISE NOTICE 'DATA_PRIME';
-    FOR r IN SELECT * FROM data_prime LOOP
+    FOR r IN SELECT * FROM data2_prime LOOP
         RAISE NOTICE '%', to_json(r);
     END LOOP;
 
     RETURN QUERY
     WITH stats AS (
         SELECT 
-            'data' AS dataset,
+            'data2' AS dataset,
             AVG(a)::double precision AS a_mean,
             STDDEV(a)::double precision AS a_stddev,
             PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY a)::double precision AS a_median,
             AVG(b)::double precision AS b_mean,
             STDDEV(b)::double precision AS b_stddev,
             PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY b)::double precision AS b_median
-        FROM data
+        FROM data2
     ),
     stats_prime AS (
         SELECT 
-            'data_prime' AS dataset,
+            'data2_prime' AS dataset,
             AVG(a_prime)::double precision AS a_mean,
             STDDEV(a_prime)::double precision AS a_stddev,
             PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY a_prime)::double precision AS a_median,
             AVG(b_prime)::double precision AS b_mean,
             STDDEV(b_prime)::double precision AS b_stddev,
             PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY b_prime)::double precision AS b_median
-        FROM data_prime
+        FROM data2_prime
     )
     SELECT * FROM stats
     UNION ALL
@@ -348,4 +345,57 @@ END;
 $$ LANGUAGE plpgsql;
 ---------------------------------------------------------------
 ;
-select * from analyze2(10);
+select * from f_analyze2(10);
+---------------------------------------------------------------
+-- 4.6
+---------------------------------------------------------------
+;
+CREATE OR REPLACE FUNCTION a_mono(num_records INT, left_b INT, right_b INT)
+RETURNS BOOLEAN AS $$
+DECLARE
+    r RECORD;
+    avg_a DOUBLE PRECISION;
+    stddev_a DOUBLE PRECISION;
+    median_a DOUBLE PRECISION;
+    avg_b DOUBLE PRECISION;
+    stddev_b DOUBLE PRECISION;
+    median_b DOUBLE PRECISION;
+BEGIN
+    CREATE TEMP TABLE IF NOT EXISTS m_data (
+        a INT,
+        b INT
+    );
+    TRUNCATE TABLE m_data RESTART IDENTITY;
+
+    INSERT INTO m_data (a, b)
+    SELECT floor(random() * (right_b - left_b + 1) + left_b)::int, floor(random() * (right_b - left_b + 1) + left_b)::int::int
+    FROM generate_series(1, num_records);
+
+    RAISE NOTICE 'm_data';
+    FOR r IN SELECT * FROM m_data ORDER BY a LOOP
+        RAISE NOTICE '%', to_json(r);
+    END LOOP;
+
+    SELECT AVG(a) INTO avg_a FROM m_data;
+    SELECT STDDEV(a) INTO stddev_a FROM m_data;
+    SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY a) INTO median_a FROM m_data;
+
+    SELECT AVG(b) INTO avg_b FROM m_data;
+    SELECT STDDEV(b) INTO stddev_b FROM m_data;
+    SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY b) INTO median_b FROM m_data;
+
+
+    RAISE NOTICE 'AVG(a) = %', to_json(avg_a);
+    RAISE NOTICE 'STDDEV(a) = %', to_json(stddev_a);
+    RAISE NOTICE 'MEDIAN(a) = %', to_json(median_a);
+
+    RAISE NOTICE 'AVG(b) = %', to_json(avg_b);
+    RAISE NOTICE 'STDDEV(b) = %', to_json(stddev_b);
+    RAISE NOTICE 'MEDIAN(b) = %', to_json(median_b);
+
+    RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql;
+---------------------------------------------------------------
+;
+select * from a_mono(10, -100, 100);
