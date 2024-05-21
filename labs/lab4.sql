@@ -384,7 +384,6 @@ BEGIN
     SELECT STDDEV(b) INTO stddev_b FROM m_data;
     SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY b) INTO median_b FROM m_data;
 
-
     RAISE NOTICE 'AVG(a) = %', to_json(avg_a);
     RAISE NOTICE 'STDDEV(a) = %', to_json(stddev_a);
     RAISE NOTICE 'MEDIAN(a) = %', to_json(median_a);
